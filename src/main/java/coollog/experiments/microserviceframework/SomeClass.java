@@ -16,20 +16,24 @@
 
 package coollog.experiments.microserviceframework;
 
+import com.google.cloud.tools.jib.configuration.CacheDirectoryCreationException;
+import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import coollog.experiments.microserviceframework.deployer.Deployer;
 import coollog.experiments.microserviceframework.packager.ClasspathResolver;
 import coollog.experiments.microserviceframework.packager.ContainerBuilder;
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
+/** THIS IS JUST FOR TESTING */
 public class SomeClass {
 
   public static void main(String[] args)
-      throws InterruptedException, IOException, URISyntaxException {
+      throws InterruptedException, IOException, ExecutionException, InvalidImageReferenceException,
+          CacheDirectoryCreationException {
     if (args.length > 0) {
       helloWorld();
       return;

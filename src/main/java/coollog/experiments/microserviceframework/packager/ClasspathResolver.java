@@ -47,6 +47,9 @@ public class ClasspathResolver {
 
   private static List<Path> getClasspathFiles(String classpathElement) throws IOException {
     Path classpathFile = Paths.get(classpathElement);
+    if (Files.notExists(classpathFile)) {
+      return Collections.emptyList();
+    }
     if (Files.isDirectory(classpathFile)) {
       // If classpathElement is a directory, adds all the files in that directory.
       try (Stream<Path> classpathDirectoryFiles = Files.list(classpathFile)) {

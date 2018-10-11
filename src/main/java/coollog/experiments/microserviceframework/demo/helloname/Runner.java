@@ -16,17 +16,20 @@
 
 package coollog.experiments.microserviceframework.demo.helloname;
 
+import com.google.cloud.tools.jib.configuration.CacheDirectoryCreationException;
+import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import coollog.experiments.microserviceframework.framework.ServiceDeployer;
 import coollog.experiments.microserviceframework.framework.ServiceRunner;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
-import java.net.URISyntaxException;
+import java.util.concurrent.ExecutionException;
 
 public class Runner extends ServiceRunner {
 
   public static void main(String[] args)
       throws ClassNotFoundException, IOException, InstantiationException, InvocationTargetException,
-          URISyntaxException, InterruptedException {
+          InterruptedException, ExecutionException, InvalidImageReferenceException,
+          CacheDirectoryCreationException {
     register(NameService.class);
     register(HelloService.class);
 

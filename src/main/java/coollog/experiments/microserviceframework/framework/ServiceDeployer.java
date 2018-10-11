@@ -16,19 +16,24 @@
 
 package coollog.experiments.microserviceframework.framework;
 
+import com.google.cloud.tools.jib.configuration.CacheDirectoryCreationException;
+import com.google.cloud.tools.jib.image.DescriptorDigest;
+import com.google.cloud.tools.jib.image.ImageReference;
+import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import coollog.experiments.microserviceframework.deployer.Deployer;
 import coollog.experiments.microserviceframework.packager.ClasspathResolver;
 import coollog.experiments.microserviceframework.packager.ContainerBuilder;
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 /** VERY MUCH EXPERIMENTAL */
 public class ServiceDeployer {
 
   public static void redeploy(String runnerClass)
-      throws IOException, URISyntaxException, InterruptedException {
+      throws IOException, InterruptedException, ExecutionException, InvalidImageReferenceException,
+          CacheDirectoryCreationException {
     List<MicroserviceMethodHandler<?>> microserviceMethodHandlers =
         Services.getServiceMethodHandlers();
 
@@ -39,21 +44,29 @@ public class ServiceDeployer {
 
   private static void redeploy(
       MicroserviceMethodHandler<?> microserviceMethodHandler, String runnerClass)
-      throws IOException, URISyntaxException, InterruptedException {
+      throws IOException, InterruptedException, ExecutionException, InvalidImageReferenceException,
+          CacheDirectoryCreationException {
     // Gets all the files to package.
     List<Path> classpathFiles = ClasspathResolver.getClasspathFiles();
     classpathFiles.forEach(System.out::println);
 
     // Packages the files into a container.
     String imageReference = "gcr.io/qingyangc-sandbox/" + microserviceMethodHandler.getHost();
-    ContainerBuilder.containerize(
-        classpathFiles,
-        imageReference,
-        runnerClass,
-        microserviceMethodHandler.getClazz().getName());
+    System.out.println("Containerizing " + imageReference);
+    DescriptorDigest containerDigest =
+        ContainerBuilder.containerize(
+            classpathFiles,
+            imageReference,
+            runnerClass,
+            microserviceMethodHandler.getClazz().getName());
+    System.out.println("Containerized " + imageReference);
 
     // Runs the container on kubernetes.
-    Deployer.deploy(microserviceMethodHandler.getHost(), imageReference);
+    ImageReference imageReferenceWithDigest =
+        ImageReference.parse(imageReference).withTag(containerDigest.toString());
+    System.out.println("Deploying " + imageReferenceWithDigest);
+    Deployer.deploy(microserviceMethodHandler.getHost(), imageReferenceWithDigest.toString());
+    System.out.println("Deployed " + imageReferenceWithDigest);
   }
 
   private ServiceDeployer() {}

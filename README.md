@@ -6,7 +6,9 @@ Newer attempt at microservice fw
 - copied microserviceframework over
 - helloname is working
 
+10/11
 
+- replacing Docker build with Jib Core
 
 
 Usage:

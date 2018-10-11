@@ -16,77 +16,50 @@
 
 package coollog.experiments.microserviceframework.packager;
 
-import com.google.common.io.Resources;
-import coollog.experiments.microserviceframework.command.Command;
-import coollog.experiments.microserviceframework.filesystem.FileOperations;
+import com.google.cloud.tools.jib.api.Containerizer;
+import com.google.cloud.tools.jib.api.Jib;
+import com.google.cloud.tools.jib.api.RegistryImage;
+import com.google.cloud.tools.jib.configuration.CacheDirectoryCreationException;
+import com.google.cloud.tools.jib.filesystem.AbsoluteUnixPath;
+import com.google.cloud.tools.jib.frontend.CredentialRetrieverFactory;
+import com.google.cloud.tools.jib.image.DescriptorDigest;
+import com.google.cloud.tools.jib.image.ImageReference;
+import com.google.cloud.tools.jib.image.InvalidImageReferenceException;
 import java.io.IOException;
-import java.net.URISyntaxException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 public class ContainerBuilder {
 
-  private static class DockerContextContainerizer {
+  private static class JibContainerizer {
 
-    private static void containerize(
+    private static DescriptorDigest containerize(
         List<Path> files, String imageReference, String mainClass, String arg)
-        throws IOException, InterruptedException, URISyntaxException {
-      // Makes Docker context.
-      Path dockerContext = Files.createTempDirectory("");
-      dockerContext.toFile().deleteOnExit();
-      Path filesToCopy = Files.createTempDirectory(dockerContext, "");
-      filesToCopy.toFile().deleteOnExit();
-      for (Path file : files) {
-        FileOperations.copy(file, filesToCopy);
-      }
-      makeDockerfile(
-          dockerContext.resolve("Dockerfile"),
-          dockerContext.relativize(filesToCopy).toString(),
-          mainClass,
-          arg);
-
-      System.out.println(dockerContext);
-
-      // Runs Docker build.
-      dockerBuild(dockerContext, imageReference);
-
-      // Runs Docker push.
-      dockerPush(imageReference);
+        throws InvalidImageReferenceException, IOException, InterruptedException,
+            ExecutionException, CacheDirectoryCreationException {
+      ImageReference targetImageReference = ImageReference.parse(imageReference);
+      return Jib.from("gcr.io/distroless/java:debug")
+          .addLayer(files, AbsoluteUnixPath.get("/app"))
+          .setEntrypoint(Arrays.asList("java", "-cp", "/app/:/app/*", mainClass, arg))
+          .containerize(
+              Containerizer.to(
+                  RegistryImage.named(targetImageReference)
+                      .addCredentialRetriever(
+                          CredentialRetrieverFactory.forImage(targetImageReference)
+                              .dockerCredentialHelper("docker-credential-gcr"))))
+          .getDigest();
     }
 
-    private static void makeDockerfile(
-        Path destination, String copyFiles, String mainClass, String arg)
-        throws URISyntaxException, IOException {
-      Path dockerfileTemplate =
-          Paths.get(Resources.getResource("templates/docker/Dockerfile").toURI());
-      String dockerfileTemplateString =
-          new String(Files.readAllBytes(dockerfileTemplate), StandardCharsets.UTF_8);
-      String dockerfile =
-          dockerfileTemplateString
-              .replace("@@FILES@@", copyFiles)
-              .replace("@@MAINCLASS@@", mainClass)
-              .replace("@@ARG@@", arg);
-      Files.write(destination, dockerfile.getBytes(StandardCharsets.UTF_8));
-      System.out.println("Dockerfile:\n" + dockerfile);
-    }
-
-    private static void dockerBuild(Path dockerContext, String imageReference)
-        throws IOException, InterruptedException {
-      Command.runCommand("docker", "build", "--tag", imageReference, dockerContext.toString());
-    }
-
-    private static void dockerPush(String imageReference) throws IOException, InterruptedException {
-      Command.runCommand("docker", "push", imageReference);
-    }
+    private JibContainerizer() {}
   }
 
-  public static void containerize(
+  public static DescriptorDigest containerize(
       List<Path> files, String imageReference, String mainClass, String arg)
-      throws IOException, URISyntaxException, InterruptedException {
-    DockerContextContainerizer.containerize(files, imageReference, mainClass, arg);
+      throws IOException, InterruptedException, ExecutionException, InvalidImageReferenceException,
+          CacheDirectoryCreationException {
+    return JibContainerizer.containerize(files, imageReference, mainClass, arg);
   }
 
   private ContainerBuilder() {}
