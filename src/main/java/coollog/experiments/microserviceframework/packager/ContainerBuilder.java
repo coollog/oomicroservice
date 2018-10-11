@@ -27,7 +27,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 
-public class Containerizer {
+public class ContainerBuilder {
 
   private static class DockerContextContainerizer {
 
@@ -89,5 +89,5 @@ public class Containerizer {
     DockerContextContainerizer.containerize(files, imageReference, mainClass, arg);
   }
 
-  private Containerizer() {}
+  private ContainerBuilder() {}
 }

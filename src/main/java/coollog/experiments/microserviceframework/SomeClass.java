@@ -20,7 +20,7 @@ import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import coollog.experiments.microserviceframework.deployer.Deployer;
 import coollog.experiments.microserviceframework.packager.ClasspathResolver;
-import coollog.experiments.microserviceframework.packager.Containerizer;
+import coollog.experiments.microserviceframework.packager.ContainerBuilder;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
@@ -41,7 +41,7 @@ public class SomeClass {
 
     // Packages the files into a container.
     String imageReference = "gcr.io/qingyangc-sandbox/helloworld";
-    Containerizer.containerize(
+    ContainerBuilder.containerize(
         classpathFiles, imageReference, "coollog.experiments.microserviceframework.SomeClass", "");
 
     // Runs the container on kubernetes.
