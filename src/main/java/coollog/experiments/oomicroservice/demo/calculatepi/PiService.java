@@ -14,15 +14,26 @@
  * the License.
  */
 
-package coollog.experiments.oomicroservice.demo.helloname;
+package coollog.experiments.oomicroservice.demo.calculatepi;
 
 import coollog.experiments.oomicroservice.framework.Microservice;
 
-public class NameService extends Microservice {
+public class PiService extends Microservice {
 
-  private static String NAME = "Serverless Fan";
+  public void start() {
+    new Thread(this::pi).start();
+  }
 
-  public String getName() {
-    return NAME;
+  @SuppressWarnings("InfiniteLoopStatement")
+  private void pi() {
+    while (true) {
+      double x = Math.random();
+      double y = Math.random();
+      if (Math.sqrt(x * x + y * y) < 1.0) {
+        service(CollectorService.class).hit();
+      } else {
+        service(CollectorService.class).miss();
+      }
+    }
   }
 }

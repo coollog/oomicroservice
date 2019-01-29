@@ -71,7 +71,9 @@ public class ContainerBuilder {
                           .addCredentialRetriever(
                               CredentialRetrieverFactory.forImage(targetImageReference)
                                   .dockerConfig())
-              .addCredentialRetriever(CredentialRetrieverFactory.forImage(targetImageReference).inferCredentialHelper()))
+                          .addCredentialRetriever(
+                              CredentialRetrieverFactory.forImage(targetImageReference)
+                                  .inferCredentialHelper()))
                   .setApplicationLayersCache(Containerizer.DEFAULT_BASE_CACHE_DIRECTORY)
                   .setExecutorService(executorService))
           .getDigest();

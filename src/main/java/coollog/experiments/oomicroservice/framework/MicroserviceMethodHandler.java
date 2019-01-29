@@ -71,7 +71,7 @@ class MicroserviceMethodHandler<T extends Microservice> implements MethodHandler
 
       // Gets the response.
       String response = CharStreams.toString(inputStreamReader);
-      System.err.println("GOT " + response);
+      //      System.err.println("GOT " + response);
 
       // Converts response to correct return type.
       if (thisMethod.getReturnType().equals(String.class)) {

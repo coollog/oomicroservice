@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Callable;
 import javassist.util.proxy.ProxyFactory;
 import javassist.util.proxy.ProxyObject;
 import org.objenesis.Objenesis;
@@ -34,11 +35,14 @@ class ServiceRegistry {
 
     private final Class<T> clazz;
     private final String host;
+    private final Callable<T> microserviceInstantiator;
     private final MicroserviceMethodHandler<T> microserviceMethodHandler;
 
-    private RegisteredMicroservice(Class<T> clazz, String host) {
+    private RegisteredMicroservice(
+        Class<T> clazz, String host, Callable<T> microserviceInstantiator) {
       this.clazz = clazz;
       this.host = host;
+      this.microserviceInstantiator = microserviceInstantiator;
       this.microserviceMethodHandler = new MicroserviceMethodHandler<>(clazz, host);
     }
 
@@ -91,14 +95,39 @@ class ServiceRegistry {
   }
 
   /**
-   * Registers the {@link Microservice} class with a {@code host} and {@code port} it's running on.
+   * Registers the {@link Microservice} class with a {@code host} it's running on.
+   *
+   * @param microserviceClass the {@link Microservice} class
+   * @param host the host
+   * @param microserviceInstantiator instantiator for {@code microserviceClass}
+   * @param <T> the type of {@code microserviceClass}
    */
-  static <T extends Microservice> void register(Class<T> microserviceClass, String host) {
+  static <T extends Microservice> void register(
+      Class<T> microserviceClass, String host, Callable<T> microserviceInstantiator) {
     host = host.toLowerCase();
     System.err.println(
         "Registering class with name " + microserviceClass.getName() + " at " + host);
     registeredServiceMap.put(
-        microserviceClass, new RegisteredMicroservice<>(microserviceClass, host));
+        microserviceClass,
+        new RegisteredMicroservice<>(microserviceClass, host, microserviceInstantiator));
+  }
+
+  /**
+   * Creates a new instance of {@code microserviceClass}.
+   *
+   * @param microserviceClass the {@link Microservice} class
+   * @param <T> the type of {@code microserviceClass}
+   * @return a new instance of {@code microserviceClass}
+   * @throws Exception if an exception occurs
+   */
+  static <T extends Microservice> T newInstance(Class<T> microserviceClass) throws Exception {
+    if (!registeredServiceMap.containsKey(microserviceClass)) {
+      throw new IllegalArgumentException(
+          "No registered class with name " + microserviceClass.getName());
+    }
+
+    return microserviceClass.cast(
+        registeredServiceMap.get(microserviceClass).microserviceInstantiator.call());
   }
 
   /** Creates a proxy for the {@link Microservice} to replace its public API with network calls. */

@@ -27,6 +27,8 @@ import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 
 /** Implement as runner for microservices. */
 public abstract class ServiceRunner {
@@ -35,6 +37,54 @@ public abstract class ServiceRunner {
 
   private static final MethodInvocationSerializer methodInvocationSerializer =
       new BasicMethodInvocationSerializer();
+
+  /**
+   * Call this after registering the {@link Microservice}s.
+   *
+   * @param serviceRunnerClass the {@link ServiceRunner}
+   * @param args the args passed to main
+   * @throws ClassNotFoundException if the class does not exist
+   * @throws InvocationTargetException if a remote call to this microservice fails
+   * @throws IOException if an I/O exception occurs
+   * @throws InstantiationException if the microservice fails to instantiate
+   */
+  protected static void runMain(Class<? extends ServiceRunner> serviceRunnerClass, String[] args)
+      throws ExecutionException, InterruptedException, ClassNotFoundException, IOException,
+          InstantiationException, InvocationTargetException {
+    // When no args, runs as a deployer.
+    if (args.length == 0) {
+      ServiceDeployer.deploy(serviceRunnerClass);
+      return;
+    }
+
+    // When there is an arg, runs as the corresponding microservice.
+    String runClassName = args[0];
+    run(runClassName);
+  }
+
+  /**
+   * Registers the {@link Microservice}.
+   *
+   * @param microserviceClass the {@link Microservice} implementation class
+   * @param <T> the type of {@code microserviceClass}
+   */
+  protected static <T extends Microservice> void register(Class<T> microserviceClass) {
+    ServiceRegistry.register(
+        microserviceClass, microserviceClass.getSimpleName(), microserviceClass::newInstance);
+  }
+
+  /**
+   * Registers the {@link Microservice}.
+   *
+   * @param microserviceClass the {@link Microservice} implementation class
+   * @param microserviceInstantiator instantiator for the {@link Microservice} implementation class
+   * @param <T> the type of {@code microserviceClass}
+   */
+  protected static <T extends Microservice> void register(
+      Class<T> microserviceClass, Callable<T> microserviceInstantiator) {
+    ServiceRegistry.register(
+        microserviceClass, microserviceClass.getSimpleName(), microserviceInstantiator);
+  }
 
   /**
    * Serves the {@link Microservice} with name {@code localMicroserviceClassName}.
@@ -46,7 +96,7 @@ public abstract class ServiceRunner {
    * @throws InstantiationException if the microservice fails to instantiate
    */
   @SuppressWarnings("unchecked")
-  protected static void run(String localMicroserviceClassName)
+  private static void run(String localMicroserviceClassName)
       throws ClassNotFoundException, InvocationTargetException, IOException,
           InstantiationException {
     System.err.println("Serving " + localMicroserviceClassName);
@@ -57,16 +107,6 @@ public abstract class ServiceRunner {
     }
 
     runServerForClass((Class<? extends Microservice>) runClass);
-  }
-
-  /**
-   * Registers the {@link Microservice}.
-   *
-   * @param microserviceClass the {@link Microservice} implementation class
-   * @param <T> the type of {@code microserviceClass}
-   */
-  protected static <T extends Microservice> void register(Class<T> microserviceClass) {
-    ServiceRegistry.register(microserviceClass, microserviceClass.getSimpleName());
   }
 
   /**
@@ -82,7 +122,7 @@ public abstract class ServiceRunner {
   private static <T extends Microservice> void runServerForClass(Class<T> microserviceClass)
       throws InstantiationException, IOException, InvocationTargetException {
     try {
-      T runClassInstance = microserviceClass.newInstance();
+      T runClassInstance = ServiceRegistry.newInstance(microserviceClass);
 
       try (ServerSocket serverSocket = new ServerSocket(SERVICE_PORT)) {
         while (true) {
@@ -96,6 +136,9 @@ public abstract class ServiceRunner {
 
     } catch (IllegalAccessException ex) {
       throw new IllegalArgumentException(microserviceClass + " must be public", ex);
+
+    } catch (Exception ex) {
+      throw new RuntimeException(ex);
     }
   }
 
@@ -119,7 +162,7 @@ public abstract class ServiceRunner {
     String methodName = methodInvocation.getMethodName();
     List<String> args = methodInvocation.getArgs();
 
-    System.err.println("GOT " + methodName + " , ARGS " + String.join(", ", args));
+    //    System.err.println("GOT " + methodName + " , ARGS " + String.join(", ", args));
 
     // Finds the matched method.
     for (Method method : serviceInstance.getClass().getDeclaredMethods()) {
@@ -174,7 +217,7 @@ public abstract class ServiceRunner {
 
       String output = String.valueOf(method.invoke(serviceInstance, typedArgs.toArray()));
       outputStream.write(output.getBytes(StandardCharsets.UTF_8));
-      System.err.println("SENT " + output);
+      //      System.err.println("SENT " + output);
       return;
     }
 

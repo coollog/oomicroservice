@@ -59,7 +59,8 @@ public class ServiceDeployer {
    * @throws InterruptedException if the deployment is interrupted
    * @throws ExecutionException if the deployment execution throws an exception
    */
-  public static void deploy(Class<?> mainClass) throws InterruptedException, ExecutionException {
+  public static void deploy(Class<? extends ServiceRunner> mainClass)
+      throws InterruptedException, ExecutionException {
     // Gets the registered services to deploy.
     List<ServiceRegistry.RegisteredMicroservice<?>> registeredMicroservices =
         ServiceRegistry.getRegisteredMicroservices();

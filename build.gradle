@@ -26,8 +26,16 @@ dependencies {
   testImplementation group: 'junit', name: 'junit', version: '4.12'
 }
 
-task run(type: JavaExec) {
+def IMAGE_PREFIX = 'gcr.io/qingyangc-sandbox/msfw/'
+
+task runHellonameDemo(type: JavaExec) {
   classpath = sourceSets.main.runtimeClasspath
   main = 'coollog.experiments.oomicroservice.demo.helloname.Runner'
-  environment IMAGE_PREFIX: 'gcr.io/qingyangc-sandbox/msfw/'
+  environment IMAGE_PREFIX: IMAGE_PREFIX
+}
+
+task runPiDemo(type: JavaExec) {
+  classpath = sourceSets.main.runtimeClasspath
+  main = 'coollog.experiments.oomicroservice.demo.calculatepi.Runner'
+  environment IMAGE_PREFIX: IMAGE_PREFIX
 }

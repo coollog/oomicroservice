@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Google LLC. All rights reserved.
+ * Copyright 2019 Google LLC. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,30 +14,21 @@
  * the License.
  */
 
-package coollog.experiments.oomicroservice.demo.helloname;
+package coollog.experiments.oomicroservice.demo.calculatepi;
 
 import coollog.experiments.oomicroservice.framework.ServiceRunner;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.concurrent.ExecutionException;
 
-/**
- * Demo main class.
- *
- * <p>When run without any args, the demo runs as a deployer and deploys all the microservices to
- * Kubernetes.
- *
- * <p>When run with an arg (as a container on Kubernetes), that arg is treated as the name of the
- * microservice to run.
- */
 public class Runner extends ServiceRunner {
 
   public static void main(String[] args)
       throws ClassNotFoundException, IOException, InstantiationException, InvocationTargetException,
           InterruptedException, ExecutionException {
     // Registers the microservices.
-    register(NameService.class);
-    register(HelloService.class);
+    register(CollectorService.class);
+    register(PiService.class);
 
     runMain(Runner.class, args);
   }
