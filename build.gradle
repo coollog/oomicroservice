@@ -14,16 +14,16 @@ repositories {
 }
 
 wrapper {
-  gradleVersion = '4.9'
+  gradleVersion = '4.10.3'
 }
 
 dependencies {
-  compile 'com.google.guava:guava:26.0-jre'
-  compile 'org.javassist:javassist:3.23.1-GA'
-  compile 'org.objenesis:objenesis:2.6'
-  compile 'com.google.cloud.tools:jib-core:0.1.0'
+  implementation 'com.google.guava:guava:26.0-jre'
+  implementation 'org.javassist:javassist:3.23.1-GA'
+  implementation 'org.objenesis:objenesis:2.6'
+  implementation 'com.google.cloud.tools:jib-core:0.1.1'
 
-  testCompile group: 'junit', name: 'junit', version: '4.12'
+  testImplementation group: 'junit', name: 'junit', version: '4.12'
 }
 
 task run(type: JavaExec) {
