@@ -30,13 +30,18 @@ import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
 
 public class ContainerBuilder {
 
   private static class JibContainerizer {
 
     private static DescriptorDigest containerize(
-        List<Path> files, String imageReference, String mainClass, String arg)
+        List<Path> files,
+        String imageReference,
+        String mainClass,
+        String arg,
+        ExecutorService executorService)
         throws InvalidImageReferenceException, IOException, InterruptedException,
             ExecutionException, CacheDirectoryCreationException {
       ImageReference targetImageReference = ImageReference.parse(imageReference);
@@ -45,10 +50,12 @@ public class ContainerBuilder {
           .setEntrypoint(Arrays.asList("java", "-cp", "/app/:/app/*", mainClass, arg))
           .containerize(
               Containerizer.to(
-                  RegistryImage.named(targetImageReference)
-                      .addCredentialRetriever(
-                          CredentialRetrieverFactory.forImage(targetImageReference)
-                              .dockerCredentialHelper("docker-credential-gcr"))))
+                      RegistryImage.named(targetImageReference)
+                          .addCredentialRetriever(
+                              CredentialRetrieverFactory.forImage(targetImageReference)
+                                  .dockerCredentialHelper("docker-credential-gcr")))
+                  .setApplicationLayersCache(Containerizer.DEFAULT_BASE_CACHE_DIRECTORY)
+                  .setExecutorService(executorService))
           .getDigest();
     }
 
@@ -56,10 +63,14 @@ public class ContainerBuilder {
   }
 
   public static DescriptorDigest containerize(
-      List<Path> files, String imageReference, String mainClass, String arg)
+      List<Path> files,
+      String imageReference,
+      String mainClass,
+      String arg,
+      ExecutorService executorService)
       throws IOException, InterruptedException, ExecutionException, InvalidImageReferenceException,
           CacheDirectoryCreationException {
-    return JibContainerizer.containerize(files, imageReference, mainClass, arg);
+    return JibContainerizer.containerize(files, imageReference, mainClass, arg, executorService);
   }
 
   private ContainerBuilder() {}

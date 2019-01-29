@@ -10,6 +10,9 @@ Newer attempt at microservice fw
 
 - replacing Docker build with Jib Core
 
+1/29
+
+- getting it working again
 
 Usage:
 
@@ -19,6 +22,6 @@ run
 ```
 ./gradlew goJF run
 kubectl get all
-kubectl port-forward helloservice-* 8080:80
+kubectl port-forward service/helloservice 8080:80
 echo sayHello | nc localhost 8080
 ```
