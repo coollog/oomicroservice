@@ -1,4 +1,6 @@
-Newer attempt at microservice fw
+OOMicroservice
+
+Object-oriented microservice
 
 8/19
 
@@ -13,6 +15,8 @@ Newer attempt at microservice fw
 1/29
 
 - getting it working again
+- parallelize ServiceDeployer
+
 
 Usage:
 
@@ -25,3 +29,20 @@ kubectl get all
 kubectl port-forward service/helloservice 8080:80
 echo sayHello | nc localhost 8080
 ```
+
+
+How it works:
+
+- self-containerizes with Jib Core
+- deploys to kubernetes
+- mocks method calls into remote method invocations
+
+
+Argument types supported:
+- string
+- integer
+- class
+Return types supported:
+- string
+- integer
+- void

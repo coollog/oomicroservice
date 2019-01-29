@@ -14,7 +14,7 @@
  * the License.
  */
 
-package coollog.experiments.microserviceframework.framework;
+package coollog.experiments.oomicroservice.framework;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -24,6 +24,10 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * A very basic implementation of {@link MethodInvocationSerializer}. It basically just serializes
+ * the method name and arguments with new lines in-between and {@code $} as the sentinel.
+ */
 class BasicMethodInvocationSerializer implements MethodInvocationSerializer {
 
   private static final String SENTINEL = "$";

@@ -14,7 +14,7 @@
  * the License.
  */
 
-package coollog.experiments.microserviceframework.packager;
+package coollog.experiments.oomicroservice.packager;
 
 import com.google.common.base.Splitter;
 import com.google.common.collect.Lists;
@@ -28,8 +28,15 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+/** Resolves files on the current classpath. */
 public class ClasspathResolver {
 
+  /**
+   * Gets the classpath files.
+   *
+   * @return the list of classpath files
+   * @throws IOException if an I/O exception occurs
+   */
   public static List<Path> getClasspathFiles() throws IOException {
     String javaClasspath = System.getProperty("java.class.path");
     if (javaClasspath == null) {
@@ -45,6 +52,14 @@ public class ClasspathResolver {
     return classpathFiles;
   }
 
+  /**
+   * Gets the files for a classpath element. If the classpath element is a file, resolves that file;
+   * if the classpath element is a directory, lists the files in that directory.
+   *
+   * @param classpathElement the classpath element
+   * @return the list of files for that classpath element
+   * @throws IOException
+   */
   private static List<Path> getClasspathFiles(String classpathElement) throws IOException {
     Path classpathFile = Paths.get(classpathElement);
     if (Files.notExists(classpathFile)) {

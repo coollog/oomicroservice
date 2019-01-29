@@ -14,7 +14,7 @@
  * the License.
  */
 
-package coollog.experiments.microserviceframework.framework;
+package coollog.experiments.oomicroservice.framework;
 
 import com.google.common.io.CharStreams;
 import java.io.*;
@@ -27,23 +27,22 @@ import javassist.util.proxy.MethodHandler;
 /** Proxies a method invocation on another microservice. */
 class MicroserviceMethodHandler<T extends Microservice> implements MethodHandler {
 
+  private static final MethodInvocationSerializer METHOD_INVOCATION_SERIALIZER =
+      new BasicMethodInvocationSerializer();
+
   // TODO: The class and host should be unified and stored in the service registry.
   private final Class<T> clazz;
   private final String host;
-  private final int port;
-
-  private final MethodInvocationSerializer methodInvocationSerializer =
-      new BasicMethodInvocationSerializer();
 
   /**
+   * Creates a new {@link MicroserviceMethodHandler}.
+   *
    * @param clazz the target {@link Microservice} class
    * @param host the host name of the target microservice
-   * @param port the port of the target microservice
    */
-  MicroserviceMethodHandler(Class<T> clazz, String host, int port) {
+  MicroserviceMethodHandler(Class<T> clazz, String host) {
     this.clazz = clazz;
     this.host = host;
-    this.port = port;
   }
 
   @Override
@@ -54,21 +53,25 @@ class MicroserviceMethodHandler<T extends Microservice> implements MethodHandler
     //          "Method " + thisMethod.getName() + " has non-String return type");
     //    }
 
-    System.out.println("Invoking proxied method : " + clazz.getName() + "#" + thisMethod.getName());
+    System.err.println("Invoking proxied method : " + clazz.getName() + "#" + thisMethod.getName());
 
     // Sends the TCP request.
-    try (Socket clientSocket = new Socket(host, port);
+    try (Socket clientSocket = new Socket(host, 80);
         OutputStream outputStream = clientSocket.getOutputStream();
-        BufferedWriter outputWriter = new BufferedWriter(new OutputStreamWriter(outputStream));
+        OutputStreamWriter outputStreamWriter =
+            new OutputStreamWriter(outputStream, StandardCharsets.UTF_8);
+        BufferedWriter outputWriter = new BufferedWriter(outputStreamWriter);
         InputStream inputStream = clientSocket.getInputStream();
         InputStreamReader inputStreamReader =
             new InputStreamReader(inputStream, StandardCharsets.UTF_8)) {
-      System.out.println("CALL localhost:" + port + " " + thisMethod.getName());
-      outputWriter.write(methodInvocationSerializer.serialize(thisMethod, args));
+      // Sends the serialized method call.
+      System.err.println("CALL " + host + "." + thisMethod.getName());
+      outputWriter.write(METHOD_INVOCATION_SERIALIZER.serialize(thisMethod, args));
       outputWriter.flush();
 
+      // Gets the response.
       String response = CharStreams.toString(inputStreamReader);
-      System.out.println("GOT " + response);
+      System.err.println("GOT " + response);
 
       // Converts response to correct return type.
       if (thisMethod.getReturnType().equals(String.class)) {
@@ -81,6 +84,8 @@ class MicroserviceMethodHandler<T extends Microservice> implements MethodHandler
         return null;
       }
 
+      // TODO: Add more supported return types.
+
       throw new UnsupportedOperationException(
           "Method "
               + thisMethod.getName()
@@ -88,13 +93,9 @@ class MicroserviceMethodHandler<T extends Microservice> implements MethodHandler
               + thisMethod.getReturnType());
 
     } catch (ConnectException ex) {
-      System.err.println("Could not connect to " + host + ":" + port);
+      System.err.println("Could not connect to " + host);
       throw ex;
     }
-  }
-
-  int getPort() {
-    return port;
   }
 
   Class<T> getClazz() {

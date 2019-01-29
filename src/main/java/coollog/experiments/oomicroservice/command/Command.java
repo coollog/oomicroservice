@@ -14,7 +14,7 @@
  * the License.
  */
 
-package coollog.experiments.microserviceframework.command;
+package coollog.experiments.oomicroservice.command;
 
 import com.google.common.base.Joiner;
 import com.google.common.io.CharStreams;
@@ -24,17 +24,32 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 
+/** Runs a command. */
 public class Command {
 
+  /**
+   * Runs {@code command}.
+   *
+   * @param command the command tokens
+   * @throws IOException if an I/O exception occurs
+   * @throws InterruptedException if the process is interrupted
+   */
   public static void runCommand(String... command) throws IOException, InterruptedException {
-    System.out.println("Running '" + Joiner.on(" ").join(command) + "':");
+    System.err.println("Running '" + Joiner.on(" ").join(command) + "':");
+
     Process process = new ProcessBuilder(command).start();
+
+    // Logs the stdout.
     try (InputStream stdout = process.getInputStream();
         InputStreamReader stdoutReader = new InputStreamReader(stdout, StandardCharsets.UTF_8);
         BufferedReader stdoutBufferedReader = new BufferedReader(stdoutReader)) {
-      stdoutBufferedReader.lines().forEach(System.out::println);
+      stdoutBufferedReader
+          .lines()
+          .forEach(line -> System.err.println("[" + command[0] + "] " + line));
     }
+
     int exitCode = process.waitFor();
+
     if (exitCode != 0) {
       try (InputStream stderr = process.getErrorStream();
           InputStreamReader stderrReader = new InputStreamReader(stderr, StandardCharsets.UTF_8)) {

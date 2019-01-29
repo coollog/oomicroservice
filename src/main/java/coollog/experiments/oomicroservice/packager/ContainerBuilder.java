@@ -14,7 +14,7 @@
  * the License.
  */
 
-package coollog.experiments.microserviceframework.packager;
+package coollog.experiments.oomicroservice.packager;
 
 import com.google.cloud.tools.jib.api.Containerizer;
 import com.google.cloud.tools.jib.api.Jib;
@@ -32,12 +32,29 @@ import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 
+/** Builds a container image */
 public class ContainerBuilder {
 
+  /** Containerizes using Jib Core. */
   private static class JibContainerizer {
 
+    /**
+     * Containerizes a Java container image that runs {@code classpathFiles}.
+     *
+     * @param classpathFiles the classpath files
+     * @param imageReference the image reference to containerize to
+     * @param mainClass the main class to run
+     * @param arg the argument to pass to the main class
+     * @param executorService the {@link ExecutorService} to run the containerization with
+     * @return the digest of the built container image
+     * @throws InvalidImageReferenceException if the image reference is invalid
+     * @throws IOException if an I/O exception occurs
+     * @throws InterruptedException if the execution is interrupted
+     * @throws ExecutionException if an exception occurs during containerization
+     * @throws CacheDirectoryCreationException if the Jib cache failed to create
+     */
     private static DescriptorDigest containerize(
-        List<Path> files,
+        List<Path> classpathFiles,
         String imageReference,
         String mainClass,
         String arg,
@@ -45,15 +62,16 @@ public class ContainerBuilder {
         throws InvalidImageReferenceException, IOException, InterruptedException,
             ExecutionException, CacheDirectoryCreationException {
       ImageReference targetImageReference = ImageReference.parse(imageReference);
-      return Jib.from("gcr.io/distroless/java:debug")
-          .addLayer(files, AbsoluteUnixPath.get("/app"))
+      return Jib.from("gcr.io/distroless/java")
+          .addLayer(classpathFiles, AbsoluteUnixPath.get("/app"))
           .setEntrypoint(Arrays.asList("java", "-cp", "/app/:/app/*", mainClass, arg))
           .containerize(
               Containerizer.to(
                       RegistryImage.named(targetImageReference)
                           .addCredentialRetriever(
                               CredentialRetrieverFactory.forImage(targetImageReference)
-                                  .dockerCredentialHelper("docker-credential-gcr")))
+                                  .dockerConfig())
+              .addCredentialRetriever(CredentialRetrieverFactory.forImage(targetImageReference).inferCredentialHelper()))
                   .setApplicationLayersCache(Containerizer.DEFAULT_BASE_CACHE_DIRECTORY)
                   .setExecutorService(executorService))
           .getDigest();
@@ -62,15 +80,31 @@ public class ContainerBuilder {
     private JibContainerizer() {}
   }
 
+  /**
+   * Containerizes a Java container image that runs {@code classpathFiles}.
+   *
+   * @param classpathFiles the classpath files
+   * @param imageReference the image reference to containerize to
+   * @param mainClass the main class to run
+   * @param arg the argument to pass to the main class
+   * @param executorService the {@link ExecutorService} to run the containerization with
+   * @return the digest of the built container image
+   * @throws InvalidImageReferenceException if the image reference is invalid
+   * @throws IOException if an I/O exception occurs
+   * @throws InterruptedException if the execution is interrupted
+   * @throws ExecutionException if an exception occurs during containerization
+   * @throws CacheDirectoryCreationException if the Jib cache failed to create
+   */
   public static DescriptorDigest containerize(
-      List<Path> files,
+      List<Path> classpathFiles,
       String imageReference,
       String mainClass,
       String arg,
       ExecutorService executorService)
       throws IOException, InterruptedException, ExecutionException, InvalidImageReferenceException,
           CacheDirectoryCreationException {
-    return JibContainerizer.containerize(files, imageReference, mainClass, arg, executorService);
+    return JibContainerizer.containerize(
+        classpathFiles, imageReference, mainClass, arg, executorService);
   }
 
   private ContainerBuilder() {}

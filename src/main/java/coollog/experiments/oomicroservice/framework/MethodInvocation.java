@@ -14,10 +14,11 @@
  * the License.
  */
 
-package coollog.experiments.microserviceframework.framework;
+package coollog.experiments.oomicroservice.framework;
 
 import java.util.List;
 
+/** Represents an invocation of a method (method name and arguments). */
 class MethodInvocation {
 
   private final String methodName;

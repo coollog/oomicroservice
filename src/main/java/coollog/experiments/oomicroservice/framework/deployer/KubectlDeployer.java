@@ -14,12 +14,13 @@
  * the License.
  */
 
-package coollog.experiments.microserviceframework.deployer;
+package coollog.experiments.oomicroservice.framework.deployer;
 
-import coollog.experiments.microserviceframework.command.Command;
+import coollog.experiments.oomicroservice.command.Command;
 import java.io.IOException;
 
-public class Deployer {
+/** Deploys a container image as a microservice using {@code kubectl}. */
+public class KubectlDeployer {
 
   public static void deploy(String serviceName, String imageReference)
       throws IOException, InterruptedException {
@@ -27,12 +28,12 @@ public class Deployer {
       Command.runCommand("kubectl", "delete", "service,deployment", serviceName);
 
     } catch (IOException ex) {
-      // pass
+      // Ignores any exceptions.
     }
     Command.runCommand("kubectl", "run", serviceName, "--image", imageReference);
     Command.runCommand(
         "kubectl", "expose", "deployment", serviceName, "--port=80", "--target-port=80");
   }
 
-  private Deployer() {}
+  private KubectlDeployer() {}
 }

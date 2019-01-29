@@ -28,5 +28,6 @@ dependencies {
 
 task run(type: JavaExec) {
   classpath = sourceSets.main.runtimeClasspath
-  main = 'coollog.experiments.microserviceframework.demo.helloname.Runner'
+  main = 'coollog.experiments.oomicroservice.demo.helloname.Runner'
+  environment IMAGE_PREFIX: 'gcr.io/qingyangc-sandbox/msfw/'
 }

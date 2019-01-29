@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Google Inc.
+ * Copyright 2019 Google LLC. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,15 +14,14 @@
  * the License.
  */
 
-package coollog.experiments.microserviceframework.framework;
+package coollog.experiments.oomicroservice.demo.helloname;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.lang.reflect.Method;
+import coollog.experiments.oomicroservice.framework.Microservice;
 
-interface MethodInvocationSerializer {
+public class HelloService extends Microservice {
 
-  String serialize(Method method, Object[] args);
-
-  MethodInvocation deserialize(InputStream inputStream) throws IOException;
+  public String sayHello() {
+    String name = service(NameService.class).getName();
+    return "Hello, " + name;
+  }
 }
